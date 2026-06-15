@@ -22,7 +22,7 @@ public partial class MainWindow : Window {
 
     private async void OnPreviewKeyDown(object? sender, KeyEventArgs e) {
         bool isPaste = e.Key == Key.V && e.KeyModifiers.HasFlag(KeyModifiers.Control);
-        if (isPaste is false || DeckStringInput.IsFocused)
+        if (isPaste is false)
             return;
 
         await HandleClipboardPasteAsync();
@@ -55,22 +55,5 @@ public partial class MainWindow : Window {
     private async Task ShowAlertAsync(string title, string message) {
         var alert = new AlertWindow(title, message);
         await alert.ShowDialog(this);
-    }
-
-    private async void DeckStringInput_TextChanged(object? sender, TextChangedEventArgs e) {
-        string? deckString = DeckStringInput.Text;
-        if (deckString is null)
-            return;
-        if (DataContext is MainWindowViewModel viewModel) {
-            if (deckString.Length >= 60) {
-                bool isValid = await viewModel.NewDeckString(deckString);
-                if (isValid is false) {
-                    await ShowAlertAsync(
-                        "Invalid deck string",
-                        "The text on your clipboard doesn't look like a valid Hearthstone deck string."
-                    );
-                }
-            }
-        }
     }
 }
