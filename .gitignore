@@ -1,12 +1,12 @@
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
-!*.code-workspace
-bin/*
-obj/*
+**/.vscode/*
+**/!.vscode/settings.json
+**/!.vscode/tasks.json
+**/!.vscode/launch.json
+**/!.vscode/extensions.json
+**/!.vscode/*.code-snippets
+**/!*.code-workspace
+**/bin/*
+**/obj/*
 
-# Built Visual Studio Code Extensions
-*.vsix
+**/# Built Visual Studio Code Extensions
+**/*.vsix
