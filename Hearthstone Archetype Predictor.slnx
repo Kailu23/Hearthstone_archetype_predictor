@@ -1,3 +1,4 @@
 <Solution>
+    <Project Path="Hearthstone Archetype Predictor.Tests/Hearthstone Archetype Predictor.Tests.csproj" />
     <Project Path="Hearthstone Archetype Predictor/Hearthstone Archetype Predictor.csproj" />
 </Solution>
