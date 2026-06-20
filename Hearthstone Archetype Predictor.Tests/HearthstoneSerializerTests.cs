@@ -1,8 +1,14 @@
 using Hearthstone_Archetype_Predictor.Models;
+using Hearthstone_Archetype_Predictor.Tests.Helpers;
+using Hearthstone_Archetype_Predictor.Tests.PageObjects;
 using Xunit;
 
 namespace Hearthstone_Archetype_Predictor.Tests;
 
+/// <summary>
+/// Unit tests for HearthstoneSerializer — using the POM (SerializerPage)
+/// and WaitHelper for asynchronous state verification.
+/// </summary>
 public class HearthstoneSerializerTests
 {
     private const string DeckStringPreSideboards =
@@ -18,9 +24,9 @@ public class HearthstoneSerializerTests
     public void IsValidDeckString_EmptyString_ReturnsFalse()
     {
         //Given
-        var serializer = new HearthstoneSerializer();
+        var page = new SerializerPage();
         //When
-        bool result = serializer.IsValidDeckString(string.Empty);
+        bool result = page.SubmitDeckString(string.Empty);
         //Then
         Assert.False(result);
     }
@@ -29,9 +35,9 @@ public class HearthstoneSerializerTests
     public void IsValidDeckString_NullString_ReturnsFalse()
     {
         //Given
-        var serializer = new HearthstoneSerializer();
+        var page = new SerializerPage();
         //When
-        bool result = serializer.IsValidDeckString(null!);
+        bool result = page.SubmitDeckString(null!);
         //Then
         Assert.False(result);
     }
@@ -40,9 +46,9 @@ public class HearthstoneSerializerTests
     public void IsValidDeckString_WhitespaceOnly_ReturnsFalse()
     {
         //Given
-        var serializer = new HearthstoneSerializer();
+        var page = new SerializerPage();
         //When
-        bool result = serializer.IsValidDeckString("     ");
+        bool result = page.SubmitDeckString("    ");
         //Then
         Assert.False(result);
     }
@@ -51,10 +57,10 @@ public class HearthstoneSerializerTests
     public void IsValidDeckString_RandomGarbage_ReturnFalse()
     {
         //Given
-        var serializer = new HearthstoneSerializer();
+        var page = new SerializerPage();
         const string Garbage = "garbege to test";
         //When
-        bool result = serializer.IsValidDeckString(Garbage);
+        bool result = page.SubmitDeckString(Garbage);
         //Then
         Assert.False(result);
     }
@@ -63,10 +69,10 @@ public class HearthstoneSerializerTests
     public void IsValidDeckString_PartialBase64_ReturnFalse()
     {
         //Given
-        var serializer = new HearthstoneSerializer();
+        var page = new SerializerPage();
         const string PartialBase64 = "SGVsbG8gV29ybGQ";
         //When
-        bool result = serializer.IsValidDeckString(PartialBase64);
+        bool result = page.SubmitDeckString(PartialBase64);
         //Then
         Assert.False(result);
     }
@@ -75,9 +81,9 @@ public class HearthstoneSerializerTests
     public void IsValidDeckString_DeckstringPreSideboards_ReturnsTrue()
     {
         //Given
-        var serializer = new HearthstoneSerializer();
+        var page = new SerializerPage();
         //When
-        bool actual = serializer.IsValidDeckString(DeckStringPreSideboards);
+        bool actual = page.SubmitDeckString(DeckStringPreSideboards);
         //Then
         Assert.True(actual);
     }
@@ -86,9 +92,9 @@ public class HearthstoneSerializerTests
     public void IsValidDeckString_ClassicDeckstring_ReturnsTrue()
     {
         //Given
-        var serializer = new HearthstoneSerializer();
+        var page = new SerializerPage();
         //When
-        bool actual = serializer.IsValidDeckString(ClassicDeckstring);
+        bool actual = page.SubmitDeckString(ClassicDeckstring);
         //Then
         Assert.True(actual);
     }
@@ -97,9 +103,9 @@ public class HearthstoneSerializerTests
     public void IsValidDeckString_SideboradedDeckstring_ReturnsTrue()
     {
         //Given
-        var serializer = new HearthstoneSerializer();
+        var page = new SerializerPage();
         //When
-        bool actual = serializer.IsValidDeckString(SideboardedDeckstring);
+        bool actual = page.SubmitDeckString(SideboardedDeckstring);
         //Then
         Assert.True(actual);
     }
@@ -110,11 +116,11 @@ public class HearthstoneSerializerTests
         //Given
         const string _DefaultDeckstring =
             "AAECAQcCrwSRvAIOHLACkQP/A44FqAXUBaQG7gbnB+8HgrACiLACub8CAAA=";
-        var serializer = new HearthstoneSerializer();
-        var serializerWithDefaultDeckstring = new HearthstoneSerializer(_DefaultDeckstring);
+        var page = new SerializerPage();
+        var pageWithDefaultDeckstring = new SerializerPage(_DefaultDeckstring);
         //When
-        string expected = serializerWithDefaultDeckstring.DeckString;
-        string actual = serializer.DeckString;
+        string expected = pageWithDefaultDeckstring.CurrentDeckString;
+        string actual = page.CurrentDeckString;
         //Then
         Assert.Equal(expected, actual);
     }
@@ -123,21 +129,21 @@ public class HearthstoneSerializerTests
     public void DeckString_ChangeDeckstringValue_ReturnsUpdatedDeckstring()
     {
         //Given
-        var serializer = new HearthstoneSerializer();
+        var page = new SerializerPage();
         string expected = ClassicDeckstring;
         //When
-        serializer.DeckString = expected;
+        page.SubmitDeckString(expected);
         //Then
-        Assert.Equal(expected, serializer.DeckString);
+        Assert.Equal(expected, page.CurrentDeckString);
     }
 
     [Fact]
     public void DeckString_CustomConstructoString_ReturnsSameString()
     {
         //Given
-        var serializer = new HearthstoneSerializer(DeckStringPreSideboards);
+        var page = new SerializerPage(DeckStringPreSideboards);
         //When
-        string actual = serializer.DeckString;
+        string actual = page.CurrentDeckString;
         //Then
         Assert.Equal(DeckStringPreSideboards, actual);
     }
@@ -146,9 +152,9 @@ public class HearthstoneSerializerTests
     public void Cards_BeforeDeserialization_ReturnEmpty()
     {
         //Given
-        var serializer = new HearthstoneSerializer();
+        var page = new SerializerPage();
         //When
-        var value = serializer.Cards;
+        var value = page.Cards;
         //Then
         Assert.Empty(value);
     }
@@ -161,10 +167,57 @@ public class HearthstoneSerializerTests
     public void IsValidDeckString_MultipleInvalidInputs_AllReturnFalse(string input)
     {
         //Given
-        var serializer = new HearthstoneSerializer();
+        var page = new SerializerPage();
         //When
-        bool result = serializer.IsValidDeckString(input);
+        bool result = page.SubmitDeckString(input);
         //Then
         Assert.False(result);
+    }
+
+    [Fact]
+    public async Task ImplicitWait_DoesNotThrow_CompletesInTime()
+    {
+        // Given
+        var before = DateTime.UtcNow;
+        // When
+        await WaitHelper.ImplicitWait(300);
+        var elapsed = DateTime.UtcNow - before;
+        // Then
+        Assert.True(
+            elapsed.TotalMilliseconds >= 280,
+            $"ImplicitWait was supposed to last >= 280ms, but it lasted {elapsed.TotalMilliseconds}ms."
+        );
+    }
+
+    [Fact]
+    public async Task ExplicitWait_ConditionMet_DoesNotThrow()
+    {
+        //Given
+        bool ready = false;
+        var setTask = Task.Run(async () =>
+        {
+            await Task.Delay(150);
+            ready = true;
+        });
+        //When
+        await WaitHelper.WaitUntil(condition: () => ready, timeout: TimeSpan.FromSeconds(2));
+        //Then
+        Assert.True(ready);
+    }
+
+    [Fact]
+    public async Task ExplicitWait_ConditionNeverMet_ThrowsTimeoutException()
+    {
+        //Given
+        var timeout = TimeSpan.FromMilliseconds(300);
+        //When
+        var exception = () =>
+            WaitHelper.WaitUntil(
+                condition: () => false,
+                timeout: timeout,
+                timeoutMessage: "Test timeout"
+            );
+        //Then
+        await Assert.ThrowsAsync<TimeoutException>(exception);
     }
 }
