@@ -9,16 +9,19 @@ using HearthDb.Deckstrings;
 
 namespace Hearthstone_Archetype_Predictor.Models;
 
-public class HearthstoneSerializer {
+public class HearthstoneSerializer
+{
     private string _deckString;
-    public string DeckString {
+    public string DeckString
+    {
         get { return _deckString; }
         set { _deckString = value; }
     }
     private Deck _deck;
 
     private Dictionary<HearthDb.Card, int> _cards;
-    public Dictionary<HearthDb.Card, int> Cards {
+    public Dictionary<HearthDb.Card, int> Cards
+    {
         get { return this._cards; }
     }
 
@@ -30,7 +33,8 @@ public class HearthstoneSerializer {
 
     public HearthstoneSerializer(
         string deckString = "AAECAQcCrwSRvAIOHLACkQP/A44FqAXUBaQG7gbnB+8HgrACiLACub8CAAA="
-    ) {
+    )
+    {
         this._deckString = deckString;
         this._deck = new Deck();
         this._cards = new Dictionary<HearthDb.Card, int>();
@@ -38,12 +42,14 @@ public class HearthstoneSerializer {
         this._imageUrls = new Dictionary<HearthDb.Card, string>();
     }
 
-    public async Task<List<Bitmap>> GetImagesAsync() {
+    public async Task<List<Bitmap>> GetImagesAsync()
+    {
         await Deserialize(this._deckString);
         return _images;
     }
 
-    private async Task Deserialize(string deckString) {
+    private async Task Deserialize(string deckString)
+    {
         List<Bitmap> downloadedBitmaps = new List<Bitmap>();
         this._deck = DeckSerializer.Deserialize(deckString);
 
@@ -52,7 +58,8 @@ public class HearthstoneSerializer {
         _imageUrls.Clear();
         _images.Clear();
         string imageUrl;
-        foreach (var card in _cards) {
+        foreach (var card in _cards)
+        {
             imageUrl = CreateImageUrl(card.Key.Id);
             _imageUrls.Add(card.Key, imageUrl);
         }
@@ -72,26 +79,32 @@ public class HearthstoneSerializer {
     /// </summary>
     /// <param name="id"></param>
     /// <returns></returns>
-    private string CreateImageUrl(string id) {
+    private string CreateImageUrl(string id)
+    {
         return $"{baseUrl}/{id}.png";
     }
 
     private async Task<List<Bitmap>> DownloadImagesAsync(
         Dictionary<HearthDb.Card, string> imageUrls
-    ) {
-        try {
+    )
+    {
+        try
+        {
             var downloadTasks = imageUrls.Select(url => DownloadImageAsync(url.Value));
 
             var bitmaps = await Task.WhenAll(downloadTasks);
 
             return bitmaps.ToList();
-        } catch (Exception ex) {
+        }
+        catch (Exception ex)
+        {
             Console.WriteLine($"Error downloading images: {ex.Message}");
             return new List<Bitmap>();
         }
     }
 
-    private async Task<Bitmap> DownloadImageAsync(string imageUrl) {
+    private async Task<Bitmap> DownloadImageAsync(string imageUrl)
+    {
         using var client = new HttpClient();
         using var response = await client.GetAsync(imageUrl);
         response.EnsureSuccessStatusCode();
@@ -100,15 +113,42 @@ public class HearthstoneSerializer {
         return new Bitmap(stream);
     }
 
-    public bool IsValidDeckString(string deckString) {
+    public bool IsValidDeckString(string deckString)
+    {
         if (string.IsNullOrWhiteSpace(deckString))
             return false;
 
-        try {
+        try
+        {
             Deck deck = DeckSerializer.Deserialize(deckString);
             return deck is not null && deck.GetCards().Count > 0;
-        } catch {
+        }
+        catch
+        {
             return false;
         }
+    }
+
+    /// <summary>
+    /// Returns the hero class and a list of all card DbfIds, sorted in ascending order.
+    /// Cards with copies (2x) appear twice in the list — just like the Python example shows.
+    /// Used for sending data to the Azure ML endpoint.
+    /// </summary>
+    public (string DeckClass, List<int> CardDbfIds) GetDeckClassAndCardIds()
+    {
+        if (this._deck is null || _cards.Count == 0)
+            throw new InvalidOperationException(
+                "Deck isn't deserialized. Call GetImagesAsync() first."
+            );
+
+        string rawClass = _cards.Keys.First().Class.ToString();
+        string heroClass = char.ToUpper(rawClass[0]) + rawClass[1..].ToLower();
+
+        var ids = _cards
+            .SelectMany(kvp => Enumerable.Repeat(kvp.Key.DbfId, kvp.Value))
+            .OrderBy(id => id)
+            .ToList();
+
+        return (heroClass, ids);
     }
 }
