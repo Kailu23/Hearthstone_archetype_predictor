@@ -115,9 +115,11 @@ mc:Ignorable="d">
                 <TextBlock
                     Grid.Row="2"
                     Padding="20"
-                    HorizontalAlignment="Center">
-                    Your deck is of x archetype
-                </TextBlock>
+                    HorizontalAlignment="Center"
+                    FontFamily="{StaticResource NunitoFont}"
+                    FontSize="16"
+                    FontWeight="Bold"
+                    Text="{Binding Archetype, StringFormat='Your deck is of {0} archetype'}" />
 
             </Grid>
         </Panel>
